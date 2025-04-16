@@ -201,10 +201,21 @@ class ModelIndexCompleter(BaseCompleter):
     def _complete_command(self, parsed):
         lineage = parsed.lineage + [parsed.current_command]
         offset = -len(parsed.current_fragment)
-        result = [
-            CompletionResult(name, help_text=full_name, starting_index=offset)
-            for name, full_name in self._index.commands_with_full_name(lineage)
-        ]
+
+        result = []
+        for name, full_name in self._index.commands_with_full_name(lineage):
+            if full_name:
+                help_text = full_name
+            elif self._cli_driver_fetcher and self._cli_driver_fetcher.get_operation_model(lineage, name):
+                help_text = strip_html_tags_and_newlines_and_multiple_sentences(
+                    self._cli_driver_fetcher.get_command_description(lineage, name)
+                )
+            result.append(
+                CompletionResult(name,
+                                help_text=help_text or '',
+                                starting_index=offset)
+            )
+
         return result
 
     def _outfile_filter(self, completion):

@@ -50,6 +50,16 @@ class CliDriverFetcher:
     def get_global_arg_documentation(self, arg_name):
         return self._cli_driver.arg_table[arg_name].documentation
 
+    def get_command_description(self, lineage, current_command):
+        command_model = self.get_operation_model(lineage, current_command)
+
+        if hasattr(command_model, "create_help_command"):
+            return command_model.create_help_command().description
+        elif hasattr(command_model, "documentation"):
+            return command_model.documentation
+        else:
+            return ""
+
     def get_global_arg_choices(self, arg_name):
         if arg_name in self._cli_driver.arg_table:
             return self._cli_driver.arg_table[arg_name].choices
