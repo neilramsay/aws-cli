@@ -13,14 +13,19 @@
 """Generates auto completion index."""
 
 import os
+from typing import Protocol
 
 from awscli import clidriver
 from awscli.autocomplete import db
-from awscli.autocomplete.local import indexer
+from awscli.autocomplete.local.indexer import ModelIndexer
 from awscli.autocomplete.serverside.indexer import APICallIndexer
 
 
-def generate_index(filename):
+class Indexer(Protocol):
+    def generate_index(self, clidriver: clidriver.CLIDriver) -> None: ...
+
+
+def generate_index(filename: str) -> str:
     """Generates the default auto-complete index"""
     filename = os.path.abspath(filename)
     index_dir = os.path.dirname(filename)
@@ -42,13 +47,15 @@ def generate_index(filename):
     return filename
 
 
-def _do_generate_index(filename):
+def _do_generate_index(filename: str) -> None:
     db_connection = db.DatabaseConnection(filename)
-    indexers = [
-        indexer.ModelIndexer(db_connection),
+    indexers: list[Indexer] = [
+        ModelIndexer(db_connection),
         APICallIndexer(db_connection),
     ]
-    driver = clidriver.create_clidriver()
+    driver: clidriver.CLIDriver = (
+        clidriver.create_clidriver()
+    )  # TODO - Remove type once CLI driver typing done
     index_gen = IndexGenerator(indexers=indexers)
     try:
         index_gen.generate_index(driver)
@@ -66,9 +73,9 @@ class IndexGenerator:
 
     """
 
-    def __init__(self, indexers):
+    def __init__(self, indexers: list[Indexer]) -> None:
         self._indexers = indexers
 
-    def generate_index(self, clidriver):
+    def generate_index(self, clidriver: clidriver.CLIDriver) -> None:
         for indexer in self._indexers:
             indexer.generate_index(clidriver)

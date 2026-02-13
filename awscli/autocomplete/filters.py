@@ -13,9 +13,16 @@
 
 import re
 from collections import namedtuple
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable
+
+    from awscli.autocomplete.completer import CompletionResult
+    Filter = Callable[[str, list[CompletionResult]], list[CompletionResult]]
 
 
-def fuzzy_filter(prefix, completions):
+def fuzzy_filter(prefix: str, completions: list["CompletionResult"]) -> list["CompletionResult"]:
     # To filter we transform string to regex in such a way:
     #
     # "rmt" -> /r.*?m.*?t/
@@ -56,7 +63,7 @@ def fuzzy_filter(prefix, completions):
     return completions
 
 
-def startswith_filter(prefix, completions):
+def startswith_filter(prefix: str, completions: list["CompletionResult"]) -> list["CompletionResult"]:
     return [
         completion
         for completion in completions

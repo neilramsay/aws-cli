@@ -80,16 +80,16 @@ class ModelIndex:
           parent = :parent
     """
 
-    def __init__(self, db_filename=None):
+    def __init__(self, db_filename: str | None = None) -> None:
         self._db_filename = db_filename
-        self._db_connection = None
+        self._db_connection: db.DatabaseConnection | None = None
 
-    def _get_db_connection(self):
+    def _get_db_connection(self) -> db.DatabaseConnection:
         if self._db_connection is None:
             self._db_connection = db.DatabaseConnection(self._db_filename)
         return self._db_connection
 
-    def command_names(self, lineage):
+    def command_names(self, lineage: list[str]) -> list[str]:
         """Return only command names without full_names
             given a lineage.
 
@@ -97,7 +97,7 @@ class ModelIndex:
         """
         return [row[0] for row in self.commands_with_full_name(lineage)]
 
-    def commands_with_full_name(self, lineage):
+    def commands_with_full_name(self, lineage: list[str]) -> list[tuple[str, str]]:
         """Return command names and full_name if it's a service
          given a lineage.
 
@@ -116,7 +116,12 @@ class ModelIndex:
         results = db.execute(self._COMMAND_NAME_QUERY, parent=parent)
         return results.fetchall()
 
-    def arg_names(self, lineage, command_name, positional_arg=False):
+    def arg_names(
+        self,
+        lineage: list[str],
+        command_name: str,
+        positional_arg: bool = False,
+    ) -> list[str]:
         """Return arg names for a given lineage.
 
         The return values do not have the `--` added, e.g
@@ -137,7 +142,9 @@ class ModelIndex:
         )
         return [row[0] for row in results]
 
-    def get_argument_data(self, lineage, command_name, arg_name):
+    def get_argument_data(
+        self, lineage: list[str], command_name: str, arg_name: str
+    ) -> CLIArgument | None:
         """Return all metadata for a single argument.
 
         For example, to get the arg data for::
@@ -164,6 +171,8 @@ class ModelIndex:
         match = results.fetchone()
         if match is not None:
             return CLIArgument(*match)
+
+        return None
 
     def get_global_arg_data(self):
         """Return all metadata for the global args.

@@ -15,17 +15,39 @@
 # This is the main entry point for auto-completion.  This is imported
 # everytime a user hits <TAB>.  Try to avoid any expensive module level
 # work or really heavyweight imports.  Prefer to lazy load as much as possible.
+from typing import TYPE_CHECKING
 
 from awscli.autocomplete import completer, custom, filters, parser, serverside
 from awscli.autocomplete.local import basic, fetcher, model
 
+if TYPE_CHECKING:
+    from awscli.autocomplete.completer import AutoCompleter, BaseCompleter
+    from awscli.autocomplete.filters import Filter
+    from awscli.clidriver import CLIDriver
+
 
 def create_autocompleter(
-    index_filename=None,
-    custom_completers=None,
-    driver=None,
-    response_filter=None,
-):
+    index_filename: str | None = None,
+    custom_completers: list["BaseCompleter"] | None = None,
+    driver: "CLIDriver | None" = None,
+    response_filter: "Filter | None" = None,
+) -> "AutoCompleter":
+    """
+    Create an autocompleter to orchestrate shell completion request
+    and registered completers.
+    
+    :param index_filename: path to the precompiled service/command database
+    :type index_filename: str | None
+    :param custom_completers: custom completers to be appended to standard completers
+    :type custom_completers: list[BaseCompleter] | None
+    :param driver: AWS CLI handler
+    :type driver: CLIDriver | None
+    :param response_filter: Filter completion responses before returning to shell
+    :type response_filter: Filter | None
+    :return: Shell Autocompleter
+    :rtype: AutoCompleter
+    """
+
     if response_filter is None:
         response_filter = filters.startswith_filter
     if custom_completers is None:
@@ -56,7 +78,16 @@ def create_autocompleter(
     return cli_completer
 
 
-def autocomplete(command_line, position=None):
+def autocomplete(command_line: str, position: int | None = None) -> None:
+    """
+    Write shell completion results to standard out for the provided
+    command line and position
+
+    :param command_line: command line to perform completion on
+    :type command_line: str
+    :param position: position within command line to perform completion on
+    :type position: int | None
+    """
     completer = create_autocompleter()
     results = completer.autocomplete(command_line, position)
     print("\n".join([result.name for result in results]))

@@ -25,14 +25,14 @@ BUILTIN_INDEX_FILE = os.path.join(
 class DatabaseConnection:
     _JOURNAL_MODE_OFF = 'PRAGMA journal_mode=OFF'
 
-    def __init__(self, db_filename=None):
+    def __init__(self, db_filename: str | None = None) -> None:
         self._db_conn = None
         self._db_filename = db_filename
         if self._db_filename is None:
             self._db_filename = self._get_index_filename()
 
     @property
-    def _connection(self):
+    def _connection(self): # TODO -> Connection:
         if self._db_conn is None:
             kwargs = {'check_same_thread': False, 'isolation_level': None}
             if self._db_filename.startswith('file::memory:'):
@@ -46,7 +46,7 @@ class DatabaseConnection:
             self._ensure_database_setup()
         return self._db_conn
 
-    def close(self):
+    def close(self) -> None:
         self._connection.close()
 
     def execute(self, query, **kwargs):
@@ -59,7 +59,7 @@ class DatabaseConnection:
         # (except when we need to generate it).
         self.execute(self._JOURNAL_MODE_OFF)
 
-    def _get_index_filename(self):
+    def _get_index_filename(self) -> str:
         if os.path.isfile(INDEX_FILE):
             return INDEX_FILE
         return BUILTIN_INDEX_FILE

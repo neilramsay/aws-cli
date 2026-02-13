@@ -11,12 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from awscli.autocomplete.db import DatabaseConnection
+from awscli.clidriver import CLIDriver
 
 
 def create_model_indexer(filename):
     index = ModelIndexer(DatabaseConnection(filename))
     return index
-
 
 class ModelIndexer:
     # TODO add full names to custom commands to get rid of this map
@@ -60,10 +60,10 @@ class ModelIndexer:
             ON param_table(parent, command);
     """
 
-    def __init__(self, db_connection):
+    def __init__(self, db_connection) -> None:
         self._db_connection = db_connection
 
-    def generate_index(self, clidriver):
+    def generate_index(self, clidriver: CLIDriver) -> None:
         self._create_tables()
         parent = 'aws'
         self._db_connection.execute(

@@ -11,6 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from awscli.autocomplete.parser import CLIParser
+
 
 class AutoCompleter:
     """Main auto-completer object for the AWS CLI.
@@ -20,7 +25,9 @@ class AutoCompleter:
     server-side completions, etc).
     """
 
-    def __init__(self, parser, completers):
+    def __init__(
+        self, parser: "CLIParser", completers: list["BaseCompleter"]
+    ) -> None:
         """
 
         :param parser: A parser.CLIParser instance.
@@ -30,7 +37,9 @@ class AutoCompleter:
         self._parser = parser
         self._completers = completers
 
-    def autocomplete(self, command_line, index=None):
+    def autocomplete(
+        self, command_line: str, index: int | None = None
+    ) -> list["CompletionResult"]:
         """Attempt to find completion suggestions.
 
         :param command_line: The currently entered command line as a string.
@@ -58,12 +67,12 @@ class CompletionResult:
 
     def __init__(
         self,
-        name,
-        starting_index=0,
-        required=False,
-        cli_type_name='',
-        help_text='',
-        display_text=None,
+        name: str,
+        starting_index: int = 0,
+        required: bool = False,
+        cli_type_name: str = '',
+        help_text: str = '',
+        display_text: str | None = None,
     ):
         self.name = name
         self.starting_index = starting_index
@@ -72,7 +81,7 @@ class CompletionResult:
         self.help_text = help_text
         self.display_text = display_text
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (
             isinstance(other, self.__class__)
             and self.name == other.name
@@ -80,7 +89,7 @@ class CompletionResult:
             and self.display_text == other.display_text
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '%s(%s, %s, %s, %s, %s, %s)' % (
             self.__class__.__name__,
             self.name,

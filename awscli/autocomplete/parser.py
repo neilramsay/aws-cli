@@ -10,20 +10,27 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from awscli.autocomplete.local.model import ModelIndex
+
+
 WORD_BOUNDARY = ''
 
 
 class ParsedResult:
     def __init__(
         self,
-        current_command=None,
-        current_param=None,
-        global_params=None,
-        parsed_params=None,
-        lineage=None,
+        current_command: str | None = None,
+        current_param: str | None = None,
+        global_params: dict | None = None,
+        parsed_params: dict | None = None,
+        lineage: list[str] | None = None,
         current_fragment=None,
-        unparsed_items=None,
-    ):
+        unparsed_items: list[str] | None = None,
+    ) -> None:
         """
 
         :param current_command: The name of the leaf command; the most
@@ -90,34 +97,34 @@ class ParsedResult:
             unparsed_items = []
         self.unparsed_items = unparsed_items
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, self.__class__):
             return False
         return self.__dict__ == other.__dict__
 
 
 class ParseState:
-    def __init__(self):
-        self._current_command = None
-        self.current_param = None
-        self._lineage = []
+    def __init__(self) -> None:
+        self._current_command: str | None = None
+        self.current_param: str | None = None
+        self._lineage: list[str] = []
 
     @property
-    def current_command(self):
+    def current_command(self) -> str | None:
         return self._current_command
 
     @current_command.setter
-    def current_command(self, value):
+    def current_command(self, value: str | None):
         if self._current_command is not None:
             self._lineage.append(self._current_command)
         self._current_command = value
 
     @property
-    def lineage(self):
+    def lineage(self) -> list[str]:
         return self._lineage
 
     @property
-    def full_lineage(self):
+    def full_lineage(self) -> list[str]:
         if self.current_command is None:
             return self._lineage
         return self._lineage + [self.current_command]
@@ -134,11 +141,15 @@ class CLIParser:
 
     """
 
-    def __init__(self, index, return_first_command_match=False):
-        self._index = index
+    def __init__(
+        self, index, return_first_command_match: bool = False
+    ) -> None:
+        self._index: "ModelIndex" = index
         self._return_first_command_match = return_first_command_match
 
-    def parse(self, command_line, location=None):
+    def parse(
+        self, command_line: str, location: int | None = None
+    ) -> ParsedResult:
         """Parses as much of the command line input as possible.
 
         :param command_line: The command line as a string.
@@ -152,7 +163,7 @@ class CLIParser:
         parsed = ParsedResult()
         state, remaining_parts = self._split_to_parts(command_line, location)
         global_args = self._index.arg_names(lineage=[], command_name='aws')
-        current_args = []
+        current_args: list[str] = []
         current = state.current_command
         while remaining_parts:
             current = remaining_parts.pop(0)
@@ -175,8 +186,13 @@ class CLIParser:
         return parsed
 
     def _consume_value(
-        self, remaining_parts, option_name, lineage, current_command, state
-    ):
+        self,
+        remaining_parts: list[str],
+        option_name: str,
+        lineage: list[str],
+        current_command: str | None,
+        state: ParseState,
+    ):  # TODO Return Type
         # We have a special case where a user is trying to complete
         # a value for an option, which is the last fragment of the command,
         # e.g. 'aws ec2 describe-instances --instance-ids '
@@ -232,7 +248,9 @@ class CLIParser:
                 value.append(remaining_parts.pop(0))
             return value
 
-    def _split_to_parts(self, command_line, location):
+    def _split_to_parts(
+        self, command_line: str, location: int | None
+    ) -> tuple[ParseState, list[str]]:
         state = ParseState()
         if location is not None:
             # The original auto completer had this logic.
@@ -262,12 +280,12 @@ class CLIParser:
 
     def _handle_option(
         self,
-        current,
-        remaining_parts,
-        current_args,
-        global_args,
-        parsed,
-        state,
+        current: str,
+        remaining_parts: list[str],
+        current_args: list[str],
+        global_args: dict,
+        parsed: ParsedResult,
+        state: ParseState,
     ):
         if current_args is None:
             # If there are no arguments found for this current scope,
@@ -310,16 +328,23 @@ class CLIParser:
             # unparsed_items list.
             parsed.unparsed_items.append(current)
 
-    def _is_last_word(self, remaining_parts, current):
+    def _is_last_word(self, remaining_parts: list[str], current: str):
         return not remaining_parts and current
 
-    def _is_part_of_command(self, current, command_names):
+    def _is_part_of_command(
+        self, current: str | None, command_names: list[str]
+    ):
         return any(
             command.startswith(current) and command != current
             for command in command_names
         )
 
-    def _is_command_name(self, current, remaining_parts, command_names):
+    def _is_command_name(
+        self,
+        current: str | None,
+        remaining_parts: list[str],
+        command_names: list[str],
+    ):
         # If _return_first_command_match is True
         #
         # We just check if the 'current' is in 'command_names'
@@ -343,7 +368,13 @@ class CLIParser:
         is_part_of_command = self._is_part_of_command(current, command_names)
         return is_command_name and (remaining_parts or not is_part_of_command)
 
-    def _handle_positional(self, current, state, remaining_parts, parsed):
+    def _handle_positional(
+        self,
+        current: str | None,
+        state: ParseState,
+        remaining_parts: list[str],
+        parsed: ParsedResult,
+    ):
         # This is can either be a subcommand or a positional argument
         #
         # First we can check if this is a valid subcommand given our lineage.
@@ -413,7 +444,7 @@ class CLIParser:
                     parsed.unparsed_items.append(current)
             return None
 
-    def _get_positional_argname(self, state):
+    def _get_positional_argname(self, state: ParseState) -> str | None:
         positional_args = self._index.arg_names(
             lineage=state.lineage,
             command_name=state.current_command,

@@ -13,7 +13,7 @@
 import sys
 
 
-def lazy_call(import_name, **kwargs):
+def lazy_call(import_name: str, **kwargs):
     """Import a callable and invoke it with the provided kwargs.
 
     :param import_name: A dotted string of the form ``package.module.Callable``.
@@ -41,12 +41,16 @@ class LazyClientCreator:
 
     """
 
-    def __init__(self, import_name='awscli.clidriver.create_clidriver'):
+    def __init__(self, import_name: str = 'awscli.clidriver.create_clidriver'):
         self._import_name = import_name
         self._session_cache = {}
 
     def create_client(
-        self, service_name, parsed_region=None, parsed_profile=None, **kwargs
+        self,
+        service_name: str,
+        parsed_region: str | None = None,
+        parsed_profile: str | None = None,
+        **kwargs,
     ):
         if self._session_cache.get(parsed_profile) is None:
             session = self.create_session()
